@@ -10,7 +10,7 @@ _ = require("underscore")
   # console.log "Length is #{fns.length}"
 
   fns[0] value, (err, response) ->
-    console.log "running fn", _.omit(response, 'stream')
+    # console.log "running fn", _.omit(response, 'stream')
     
     if err == "stop"
       console.log "stopping"
