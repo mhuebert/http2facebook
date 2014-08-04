@@ -92,12 +92,19 @@ phantom.create (ph) ->
   
   getJpg = (url, callback) ->
     ph.createPage (page) ->
+      page.onError = (message, trace) ->
+        console.log "Phantom Error", message, trace
       page.open url, (status) ->
         console.log "opened #{url}?", status
         jpgPath = temp.path({suffix: '.jpg'})
-        page.render jpgPath, (result) ->
-          callback(jpgPath)
-          # ph.exit()
+        setTimeout ->
+          page.render jpgPath, (result) ->
+            console.log "phantom:", result, jpgPath
+            setTimeout ->
+              callback(jpgPath)
+            , 500
+            # ph.exit()
+        , 3000
 
 
   # rest.get "/#{post_id}?fields=name,link,message"
