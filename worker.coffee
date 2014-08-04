@@ -3,28 +3,9 @@ phantom = require('phantom')
 temp = require('temp')
 rest = require("restler")
 Firebase = require("firebase")
-
-getMessage = (time) ->
-  mList = [
-    "Here you go. Moar!!! #{time}s."
-    "Served you JPG Internet in #{time}s."
-    "That was #{time} seconds of work over here."
-    "Processing time: #{time} seconds."
-    "Try drawing a website in #{time} seconds."
-    "It was worth spending #{time} seconds on you."
-    "#{time} seconds for JPG. JPG!"
-    "moar JPG! #{time}s"
-    "JPG Internet is for Sprint customers."
-    "JPG Internet is a new frontier."
-    "JPG FTW"
-  ]
-  i = Math.floor(Math.random()*(mList.length-1))
-  mList[i]
+commentMessage = require("./commentMessage")
 
 phantom.create (ph) ->
-
-
-
 
   Fire = new Firebase(process.env.fire_url)
   Fire.auth(process.env.firebase_secret)
@@ -39,6 +20,14 @@ phantom.create (ph) ->
       snap.ref().update(complete: true)
 
 
+  # Debugging messages - "debug mode"?
+  # Better way to handle async: promises, or async library?
+  # How to handle errors: catch them, report them, log them?
+
+  # getPost
+  # getJpg
+  # postToPage
+  # addComment
 
   handlePost = (id, callback) ->
     t1 = Date.now()
@@ -73,7 +62,7 @@ phantom.create (ph) ->
   addComment = (postId, time, callback) ->
     r = rest.post "https://graph.facebook.com/v2.0/#{postId}/comments",
       attachment_id: postId
-      message: getMessage(time)
+      message: commentMessage(time)
       access_token: process.env.page_token
     r.on "complete", (result, response) ->
       console.log "addComment", result, response.statusCode, response.req?.path
@@ -95,7 +84,10 @@ phantom.create (ph) ->
       page.onError = (message, trace) ->
         console.log "Phantom Error", message, trace
       page.open url, (status) ->
-        console.log "opened #{url}?", status
+        if status != 'success'
+          console.log "ERROR: PhantomJS unable to access network"
+        else
+          console.log "PhantomJS connected to #{url}"
         jpgPath = temp.path({suffix: '.jpg'})
         setTimeout ->
           page.render jpgPath, (result) ->
@@ -105,31 +97,3 @@ phantom.create (ph) ->
             , 500
             # ph.exit()
         , 3000
-
-
-  # rest.get "/#{post_id}?fields=name,link,message"
-  # - phantom(link)
-  # /
-  # Get link from post
-  # 
-
-  # def text_to_fb
-  #   with_JPG(url) do |txt|
-  #     r = RestClient.post graph+endpoint,
-  #                   :access_token => ENV["page_token"],
-  #                   :message => txt
-  #   end
-  # end
-
-  # # for comment, endpoint="#{objectId}/comments"
-  # # , endpoint=ENV["page_id"]+"/photos"
-  # def jpg_to_fb_comment (url, post_id, message="")
-  #   with_JPG(url) do |jpg|
-  #     r = RestClient.post "https://graph.facebook.com/#{post_id}/comments", 
-  #                   :source => jpg, 
-  #                   :fileUpload => true,
-  #                   :multipart => true,
-  #                   :published => true,
-  #                   :message => message
-  #   end
-  # end
