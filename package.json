@@ -1,0 +1,15 @@
+{
+  "name": "image-grabber",
+  "version": "0.0.0",
+  "description": "Grab images of web pages",
+  "main": "worker.coffee",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Matthew Huebert",
+  "license": "MIT",
+  "dependencies": {
+    "wkhtmltopdf": "^0.1.5",
+    "phantom": "^0.6.5"
+  }
+}
