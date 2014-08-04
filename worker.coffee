@@ -29,8 +29,8 @@ handleJob = (job, cb) ->
     getPost
     getImage
     postImage
-    postComment
     endJob
+    postComment
   ], finished
 
 startJob = (job, done) ->
