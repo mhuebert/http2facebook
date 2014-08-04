@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "wkhtmltopdf": "^0.1.5",
-    "phantom": "^0.6.5"
+    "phantom": "^0.6.5",
+    "coffee-script": "^1.7.1"
   }
 }
