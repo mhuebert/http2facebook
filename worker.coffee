@@ -1,99 +1,114 @@
 fs = require('fs')
-phantom = require('phantom')
+_ = require("underscore")
+screenshot = require('url-to-image')
+
 temp = require('temp')
 rest = require("restler")
 Firebase = require("firebase")
 commentMessage = require("./commentMessage")
+{pipeline, log} = require("./pipeline")
+___ = log
 
-phantom.create (ph) ->
+Fire = new Firebase(process.env.fire_url)
+Fire.auth(process.env.firebase_secret)
 
-  Fire = new Firebase(process.env.fire_url)
-  Fire.auth(process.env.firebase_secret)
+wait = (t, fn) ->
+  setTimeout fn, t*1000
 
-  Fire.child("stream").on "child_added", (snap) ->
-    item = snap.val()
-    console.log "beginning... #{item.post_id}"
-    if true in [item.started, item.complete] or item.type == 'photo'
-      return
-    snap.ref().update(started: true)
-    handlePost item.post_id, ->
-      snap.ref().update(complete: true)
+Fire.child("stream").on "child_added", (snap) ->
+  stream = _.extend snap.val(),
+    key: snap.name()
+    ref: snap.ref()
+  handleJob {stream: stream}
 
+handleJob = (job, cb) ->
+  t1 = Date.now()
+  pipeline job, [
+    startJob
+    readStream
+    getPost
+    getImage
+    postImage
+    postComment
+    endJob
+  ], finished
 
-  # Debugging messages - "debug mode"?
-  # Better way to handle async: promises, or async library?
-  # How to handle errors: catch them, report them, log them?
+startJob = (job, done) ->
+  job.stream.ref.update started: true
+  job.startTime = Date.now()
+  done(null, job)
 
-  # getPost
-  # getJpg
-  # postToPage
-  # addComment
+endJob = (job, done) ->
+  job.stream.ref.update complete: true
+  job.endTime = Date.now()
+  done(null, job)
 
-  handlePost = (id, callback) ->
-    t1 = Date.now()
-    getPost id, (post) ->
-      if !post.link
-        return
-      getJpg post.link, (jpgPath) ->
-        postToPage jpgPath, ->
-          console.log "Gonna send comment..."
-          time = ((Date.now() - t1)/1000).toFixed(1)
-          addComment id, time, ->
-            callback()
-            console.log "Finished at last... #{id}"
+finished = (err, value) ->
+  if err
+    console.log "Error:", err
+    return
+  console.log "finalValue", value
 
-  postToPage = (jpgPath, callback) ->
-    buffer = fs.readFileSync(jpgPath)
+readStream = (job, done) ->
+  {stream} = job
+  if true in [stream.started, stream.complete]
+    return done("stop", "Stream already in progress")
+  if !job.stream.post_id
+    return done("readStream: No post id in job")
 
-    r = rest.post "https://graph.facebook.com/v2.0/#{process.env.page_id}/photos", 
-      multipart: true
-      data:
-        source: rest.data("image.jpg", "image/jpeg", buffer)
-        access_token: process.env.page_token
-        fileUpload: true
-        no_story: true
-    
-    r.on "complete", (result, response) ->
-      console.log "postToPage", result, response.statusCode, response.req?.path
-      if !result.id
-        return
-      callback()
+  job.postId = stream.post_id
 
-  addComment = (postId, time, callback) ->
-    r = rest.post "https://graph.facebook.com/v2.0/#{postId}/comments",
-      attachment_id: postId
-      message: commentMessage(time)
-      access_token: process.env.page_token
-    r.on "complete", (result, response) ->
-      console.log "addComment", result, response.statusCode, response.req?.path
-      callback()
+  done(null, job)
 
-
-  getPost = (id, callback) ->
-    r = rest.get "https://graph.facebook.com/v2.0/#{id}",
-      query:
-        access_token: process.env.app_token
-    r.on "complete", (result, response) ->
-      console.log "getPost", result, response.statusCode, response.req?.path
-      if !result.id
-        return
-      callback(result)
+getPost = (job, done) ->
+  r = rest.get "https://graph.facebook.com/v2.0/#{job.postId}",
+    query:
+      access_token: process.env.app_token
   
-  getJpg = (url, callback) ->
-    ph.createPage (page) ->
-      page.onError = (message, trace) ->
-        console.log "Phantom Error", message, trace
-      page.open url, (status) ->
-        if status != 'success'
-          console.log "ERROR: PhantomJS unable to access network"
-        else
-          console.log "PhantomJS connected to #{url}"
-        jpgPath = temp.path({suffix: '.jpg'})
-        setTimeout ->
-          page.render jpgPath, (result) ->
-            console.log "phantom:", result, jpgPath
-            setTimeout ->
-              callback(jpgPath)
-            , 500
-            # ph.exit()
-        , 3000
+  r.on "success", (data, response) ->
+    # console.log "getPost", result, response.statusCode, response.req?.path
+    done null, _.extend(job, {post: data})
+
+  r.on "fail", (data, response) -> done(data)
+  r.on "error", (err, response) -> done(err)
+
+
+getImage = (job, done) ->
+  return done("getImage: no link") if !job.post.link
+  imagePath = temp.path({suffix: '.jpg'})
+  screenshot(job.post.link, imagePath)
+    .fail(done)
+    .done -> 
+      return done("getImage: File not saved!") if !fs.existsSync(imagePath)
+      job.imagePath = imagePath
+      done(null, job)
+
+postImage = (job, done) ->
+  r = rest.post "https://graph.facebook.com/v2.0/#{process.env.page_id}/photos", 
+    multipart: true
+    data:
+      source: rest.data("image.jpg", "image/jpeg", fs.readFileSync(job.imagePath))
+      access_token: process.env.page_token
+      fileUpload: true
+      no_story: true
+
+  r.on "success", (data, response) -> 
+    job.imageResult = data
+    done(null, job)
+
+  r.on "fail", (data, response) -> done(data)
+  r.on "error", (err, response) -> done(err)
+
+postComment = (job, done) ->
+  r = rest.post "https://graph.facebook.com/v2.0/#{job.postId}/comments",
+    attachment_id: job.postId
+    time = (Date.now() - job.startTime/1000).toFixed(1)
+    message: commentMessage(time)
+    access_token: process.env.page_token
+  
+  r.on "success", (result, response) ->
+    job.commentResult = result
+    done(null, job)
+
+  r.on "fail", (data, response) -> done(data)
+  r.on "error", (err, response) -> done(err)
