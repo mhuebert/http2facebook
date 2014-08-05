@@ -15,6 +15,10 @@ module.exports = (job, done) ->
   gm(buffer).size (err, size) ->
     numImages = Math.ceil size.height / 800
 
+    if numImages == 1
+      job.imagePaths = []
+      return done(null, job)
+
     imagePaths = []
     imageFinishedCount = 0
 
