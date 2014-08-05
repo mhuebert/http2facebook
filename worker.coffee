@@ -138,9 +138,8 @@ hidePost = (job, done) ->
 
 postComment = (job, done) ->
   r = rest.post "https://graph.facebook.com/v2.0/#{job.postId}/comments",
-    attachment_id: job.postId
     time = (Date.now() - job.startTime/1000).toFixed(1)
-    message: commentMessage(time)
+    message: "#{commentMessage(time)}\n\nhttps://www.facebook.com/JPGInternet/posts/"
     access_token: process.env.page_token
   
   r.on "success", (result, response) ->

@@ -1,6 +1,6 @@
 rest = require("restler")
 fs = require('fs')
-
+commentMessage = require("./commentMessage")
 
 
 module.exports = (job, done) ->
@@ -14,7 +14,7 @@ module.exports = (job, done) ->
     name: job.post.name || job.post.caption || job.post.link
     message: "Processed in #{time} seconds.\n\n #{job.post.description}"
   batch = [
-    {method: "POST", name: "create-album", no_story:true, relative_url: "/#{process.env.page_id}/albums", body: "name=#{album.name}&description=#{album.message}"}
+    {method: "POST", name: "create-album", relative_url: "/#{process.env.page_id}/albums", body: "name=#{album.name}&description=#{album.message}"}
     {method: "POST", name: "name-0", relative_url: "/{result=create-album:$.id}/photos", attached_files: "file_full", body: "message=#{job.post.link}&no_story=1"}
   ]
   
@@ -30,8 +30,19 @@ module.exports = (job, done) ->
       name: "name-#{i}", 
       relative_url: "/{result=create-album:$.id}/photos", 
       attached_files: "file#{i}", 
-      body: "message=#{pad(i)} of #{job.imagePaths.length}. {result=name-#{i-1}:$.message}#{if i == 1 then "" else "&no_story=1"}"}
+      body: "message=#{pad(i)} of #{job.imagePaths.length}.\n\n#{job.post.link} {result=name-#{i-1}:$.message}&no_story=1"}
     data["file"+i] = rest.data(imagePath, "image/jpeg", fs.readFileSync(imagePath))
+  
+
+  time = ((Date.now() - job.startTime)/1000).toFixed(1)
+  comment = commentMessage(time)
+
+  if job.imagePaths.length > 0
+    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=#{comment} Preview: https://www.facebook.com/{result=name-1:$.id}"}
+    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=Full Album (#{job.imagePaths.length} images): https://www.facebook.com/{result=create-album:$.id}"}
+  else
+    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=#{comment} https://www.facebook.com/{result=name-1:$.id}"}      
+
   data.batch = JSON.stringify(batch)
 
   r = rest.post "https://graph.facebook.com/v2.0/",
