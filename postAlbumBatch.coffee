@@ -15,7 +15,7 @@ module.exports = (job, done) ->
     message: "Processed in #{time} seconds.\n\n #{job.post.description}"
   batch = [
     {method: "POST", name: "create-album", relative_url: "/#{process.env.page_id}/albums", body: "name=#{album.name}&description=#{album.message}"}
-    {method: "POST", name: "name-0", relative_url: "/{result=create-album:$.id}/photos", attached_files: "file_full", body: "message=#{job.post.link}&no_story=1"}
+    {method: "POST", name: "name-0", relative_url: "/{result=create-album:$.id}/photos", attached_files: "file_full", body: "message=#{job.post.link}"}
   ]
   
   data =
@@ -38,10 +38,10 @@ module.exports = (job, done) ->
   comment = commentMessage(time)
 
   if job.imagePaths.length > 0
-    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=#{comment} Preview: https://www.facebook.com/{result=name-1:$.id}"}
-    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=Full Album (#{job.imagePaths.length} images): https://www.facebook.com/{result=create-album:$.id}"}
+    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} Preview: https://www.facebook.com/{result=name-1:$.id}"}
+    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\nFull Album (#{job.imagePaths.length} images): https://www.facebook.com/{result=create-album:$.id}"}
   else
-    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=#{comment} https://www.facebook.com/{result=name-1:$.id}"}      
+    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} https://www.facebook.com/{result=name-1:$.id}"}      
 
   data.batch = JSON.stringify(batch)
 
