@@ -37,9 +37,8 @@ handleJob = (job, cb) ->
     getPost
     getImage
     imageToAlbum
-    # createAlbum
-    # postAlbum
     postAlbumBatch
+    # hidePost
     updateJob(complete: true)
     # postComment
   ], finished
@@ -120,6 +119,18 @@ postImage = (job, done) ->
 
   r.on "success", (data, response) -> 
     job.imageResult = data
+    done(null, job)
+
+  r.on "fail", (data, response) -> done(data)
+  r.on "error", (err, response) -> done(err)
+
+hidePost = (job, done) ->
+  # get an access token error
+  r = rest.post "https://graph.facebook.com/v2.0/#{job.postId}",
+    is_hidden: true
+    access_token: process.env.app_token
+
+  r.on "success", (result, response) ->
     done(null, job)
 
   r.on "fail", (data, response) -> done(data)

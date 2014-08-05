@@ -15,7 +15,7 @@ module.exports = (job, done) ->
     message: "Processed in #{time} seconds.\n\n #{job.post.description}"
   batch = [
     {method: "POST", name: "create-album", no_story:true, relative_url: "/#{process.env.page_id}/albums", body: "name=#{album.name}&description=#{album.message}"}
-    {method: "POST", name: "name-0", relative_url: "/{result=create-album:$.id}/photos", attached_files: "file_full", body: "message=#{job.post.link}"}
+    {method: "POST", name: "name-0", relative_url: "/{result=create-album:$.id}/photos", attached_files: "file_full", body: "message=#{job.post.link}&no_story=1"}
   ]
   
   data =
@@ -30,7 +30,7 @@ module.exports = (job, done) ->
       name: "name-#{i}", 
       relative_url: "/{result=create-album:$.id}/photos", 
       attached_files: "file#{i}", 
-      body: "message=#{pad(i)} of #{job.imagePaths.length}. {result=name-#{i-1}:$.message}&no_story=1"}
+      body: "message=#{pad(i)} of #{job.imagePaths.length}. {result=name-#{i-1}:$.message}#{if i == 1 then "" else "&no_story=1"}"}
     data["file"+i] = rest.data(imagePath, "image/jpeg", fs.readFileSync(imagePath))
   data.batch = JSON.stringify(batch)
 
