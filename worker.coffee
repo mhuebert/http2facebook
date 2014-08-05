@@ -13,6 +13,7 @@ ___ = log
 
 imageToAlbum = require("./imageToAlbum")
 postAlbum = require("./postAlbum")
+postAlbumBatch = require("./postAlbumBatch")
 
 Fire = new Firebase(process.env.fire_url)
 Fire.auth(process.env.firebase_secret)
@@ -36,7 +37,9 @@ handleJob = (job, cb) ->
     getPost
     getImage
     imageToAlbum
-    postAlbum
+    # createAlbum
+    # postAlbum
+    postAlbumBatch
     updateJob(complete: true)
     # postComment
   ], finished

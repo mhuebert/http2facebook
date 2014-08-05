@@ -1,41 +1,35 @@
 rest = require("restler")
 fs = require('fs')
 
-
-
 module.exports = (job, done) ->
 
-  pad = (number) ->
-    if number < 10 and job.imagePaths > 9
-      return ("0"+number)
-    number
-  time = (Date.now() - job.startTime)/1000
-  album =
-    name: job.post.name || job.post.caption || job.post.link
-    message: "Processed in #{time} seconds.\n\n #{job.post.description}"
-  batch = [
-    {method: "POST", name: "create-album", no_story:true, relative_url: "/#{process.env.page_id}/albums", body: "name=#{album.name}&description=#{album.message}"}
-    {method: "POST", relative_url: "/{result=create-album:$.id}/photos", attached_files: "file_full", no_story: true, body: "message=Entire Page"}
-  ]
-  
-  data =
-    fileUpload: true
-    access_token: process.env.page_token
-    file_full: rest.data(job.imagePath, "image/jpeg", fs.readFileSync(job.imagePath))
 
-  for imagePath, index in job.imagePaths
-    i = index + 1
-    batch.push {method: "POST", relative_url: "/{result=create-album:$.id}/photos", attached_files: "file#{i}", no_story: true, body: "message=#{pad(i)} of #{job.imagePaths.length}"}
-    data["file"+i] = rest.data(imagePath, "image/jpeg", fs.readFileSync(imagePath))
-  data.batch = JSON.stringify(batch)
+  postImage = (n) ->
+    time = (Date.now() - job.startTime)/1000
+    if n == (job.imagePaths.length)
+      return done(null, job)
+    if n == -1
+      imagePath = job.imagePath
+      message = "Complete Snapshot"
+    else
+      imagePath = job.imagePaths[n]
+      message = "#{n} of #{job.imagePaths.length}. #{time}s from start."
 
-  r = rest.post "https://graph.facebook.com/v2.0/",
-    multipart: true
-    data: data
+    r = rest.post "https://graph.facebook.com/v2.0/#{job.albumId}/photos", 
+      multipart: true
+      data:
+        source: rest.data("image.jpg", "image/jpeg", fs.readFileSync(imagePath))
+        message: message
+        access_token: process.env.page_token
+        fileUpload: true
+        no_story: true
 
-  r.on "success", (data, response) -> 
-    job.albumResult = data
-    done(null, job)
+    r.on "success", (data, response) -> 
+      job.imageResult = data
+      postImage(n+1)
+      # done(null, job)
 
-  r.on "fail", (data, response) -> done(data)
-  r.on "error", (err, response) -> done(err)
+    r.on "fail", (data, response) -> done(data)
+    r.on "error", (err, response) -> done(err)
+
+  postImage(-1)
