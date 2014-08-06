@@ -35,13 +35,13 @@ handleJob = (job, cb) ->
   pipeline job, [
     validateJob
     startTimer
-    # updateJob(started: true)
+    updateJob(started: true)
     getPost
     getImage
     imageToAlbumRaw
     postAlbumBatch
     # # hidePost
-    # updateJob(complete: true)
+    updateJob(complete: true)
   ], finished
 
 updateJob = (data) ->

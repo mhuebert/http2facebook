@@ -10,7 +10,7 @@ module.exports = (time) ->
     "JPG is the new frontier. #{time} seconds."
     "JPG FTW in #{time}s."
     "Every JPG is one step closer to Internet on Facebook. Processing time: #{time} seconds."
-    "peace, love, & jpg. #{time} seconds."
+    "peace, love, and jpg. #{time} seconds."
     "#{time} seconds. welcome to the slow web."
     "who needs links when you've got JPG? #{time}s."
     "#{time} seconds is faster than mail-order. Always be grateful."
