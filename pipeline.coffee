@@ -1,9 +1,9 @@
 _ = require("underscore")
 
 @log = (message) ->
-  (@value, cb) ->
-    console.log message
-    cb(null, @value)
+  (job, cb) ->
+    console.log message, job
+    cb(null, job)
 
 @pipeline = pipeline = (value, fns, finished) ->
   return finished(null, value) if not fns.length

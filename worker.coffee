@@ -1,6 +1,7 @@
 fs = require('fs')
 _ = require("underscore")
 screenshot = require('url-to-image')
+path = require("path")
 
 
 
@@ -11,9 +12,10 @@ commentMessage = require("./commentMessage")
 {pipeline, log} = require("./pipeline")
 ___ = log
 
-imageToAlbum = require("./imageToAlbum")
-postAlbum = require("./postAlbum")
-postAlbumBatch = require("./postAlbumBatch")
+imageToAlbum = require("./middleware/imageToAlbum")
+postAlbum = require("./middleware/postAlbum")
+postAlbumBatch = require("./middleware/postAlbumBatch")
+imageToAlbumRaw = require("./middleware/imageToAlbumRaw")
 
 Fire = new Firebase(process.env.fire_url)
 Fire.auth(process.env.firebase_secret)
@@ -33,14 +35,13 @@ handleJob = (job, cb) ->
   pipeline job, [
     validateJob
     startTimer
-    updateJob(started: true)
+    # updateJob(started: true)
     getPost
     getImage
-    imageToAlbum
+    imageToAlbumRaw
     postAlbumBatch
-    # hidePost
-    updateJob(complete: true)
-    # postComment
+    # # hidePost
+    # updateJob(complete: true)
   ], finished
 
 updateJob = (data) ->
@@ -54,7 +55,7 @@ startTimer = (job, done) ->
 
 finished = (err, job) ->
   if err
-    console.log "Error:", err
+    console.log "Error:", err, job
     return
   if job?
     console.log "Finished job in #{((Date.now()-job.startTime)/1000).toFixed(1)}s"
@@ -65,21 +66,22 @@ validateJob = (job, done) ->
   if true in [stream.started, stream.complete]
     return done("stop", "Stream already in progress")
   if !job.stream.post_id
-    return done("readStream: No post id in job")
+    return done("readStream: No post id in job", job)
+  if job.stream.comment_id
+    return done("stop", "This is a comment")
   done(null, job)
 
 getPost = (job, done) ->
   job.postId = job.stream.post_id
   r = rest.get "https://graph.facebook.com/v2.0/#{job.postId}",
     query:
-      access_token: process.env.app_token
-  
+      access_token: process.env.page_token
   r.on "success", (data, response) ->
     # console.log "getPost", result, response.statusCode, response.req?.path
     done null, _.extend(job, {post: data})
 
-  r.on "fail", (data, response) -> done(data)
-  r.on "error", (err, response) -> done(err)
+  r.on "fail", (data, response) -> done(data, job)
+  r.on "error", (err, response) -> done(err, job)
 
 getImage = (job, done) ->
   return done("getImage: no link") if !job.post.link
@@ -89,7 +91,7 @@ getImage = (job, done) ->
       return done("getImage: File not saved!") if !fs.existsSync(imagePath)
       console.log job.imagePath = imagePath
       done(null, job)
-    .fail(done)
+    .fail(done, job)
 
 createAlbum = (job, done) ->
 
@@ -104,8 +106,8 @@ createAlbum = (job, done) ->
     job.albumId = data.id
     done(null, job)
 
-  r.on "fail", (data, response) -> done(data)
-  r.on "error", (err, response) -> done(err)
+  r.on "fail", (data, response) -> done(data, job)
+  r.on "error", (err, response) -> done(err, job)
 
 
 postImage = (job, done) ->
@@ -121,8 +123,8 @@ postImage = (job, done) ->
     job.imageResult = data
     done(null, job)
 
-  r.on "fail", (data, response) -> done(data)
-  r.on "error", (err, response) -> done(err)
+  r.on "fail", (data, response) -> done(data, job)
+  r.on "error", (err, response) -> done(err, job)
 
 hidePost = (job, done) ->
   # get an access token error
@@ -133,8 +135,8 @@ hidePost = (job, done) ->
   r.on "success", (result, response) ->
     done(null, job)
 
-  r.on "fail", (data, response) -> done(data)
-  r.on "error", (err, response) -> done(err)
+  r.on "fail", (data, response) -> done(data, job)
+  r.on "error", (err, response) -> done(err, job)
 
 postComment = (job, done) ->
   r = rest.post "https://graph.facebook.com/v2.0/#{job.postId}/comments",
@@ -146,5 +148,5 @@ postComment = (job, done) ->
     job.commentResult = result
     done(null, job)
 
-  r.on "fail", (data, response) -> done(data)
-  r.on "error", (err, response) -> done(err)
+  r.on "fail", (data, response) -> done(data, job)
+  r.on "error", (err, response) -> done(err, job)
