@@ -28,7 +28,7 @@ wait = (t, fn) ->
 #     getImage
 #     imageToAlbumRaw
 #   ], finished
-# wait 0.2, -> handleJob {post: {link: "http://www.apple.com/"}}
+# wait 0.2, -> handleJob {post: {link: "http://en.wikipedia.org/wiki/Main_Page"}}
 
 Fire.child("stream").on "child_added", (snap) ->
   stream = _.extend snap.val(),

@@ -19,7 +19,7 @@ module.exports = (job, done) ->
     job.imagePaths = []
 
     maxPages = 40
-    pageHeight = 700
+    pageHeight = 800
 
     numImages = Math.min (Math.ceil height / pageHeight), maxPages
     # canvasHeight = Math.min height, pageHeight*numImages
