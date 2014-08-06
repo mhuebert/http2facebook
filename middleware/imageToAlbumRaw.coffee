@@ -13,16 +13,24 @@ insert = (string, toInsert, index) ->
 
 module.exports = (job, done) ->
   t1 = Date.now()
+  # job.imagePath = "/var/folders/gk/bxgzz2tn5gs2249f05hkw2jh0000gn/T/11476-27411-x13vo.jpg"
+
   sizeOf job.imagePath, (err, dimensions) ->
-    {height} = dimensions
+    {width, height} = dimensions
     job.imagePaths = []
 
-    numImages = Math.ceil height / 800
+    maxPages = 40
+    pageHeight = 700
+
+    numImages = Math.min (Math.ceil height / pageHeight), maxPages
+    canvasHeight = Math.min height, pageHeight*numImages
     if numImages == 1
       return done(null, job)
 
+    cropPath = job.imagePath[0..-5]+"_crop.jpg"
     script = "
-    convert -crop 1x#{numImages}+20@ +repage +adjoin #{job.imagePath} #{job.imagePath[0..-5]}_%d.jpg;
+    convert -crop x#{canvasHeight}+0+0 +repage #{job.imagePath} #{cropPath};
+    convert -crop x#{numImages}+20@ +repage +adjoin #{cropPath} #{job.imagePath[0..-5]}_%d.jpg;
     "
 
     exec script, (err, stdout, stderr) ->

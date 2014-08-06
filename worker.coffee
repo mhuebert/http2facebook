@@ -30,7 +30,6 @@ Fire.child("stream").on "child_added", (snap) ->
   handleJob {stream: stream}
 
 
-
 handleJob = (job, cb) ->
   pipeline job, [
     validateJob
@@ -85,13 +84,14 @@ getPost = (job, done) ->
 
 getImage = (job, done) ->
   return done("getImage: no link") if !job.post.link
-  imagePath = temp.path({suffix: '.jpg'})
+  console.log imagePath = temp.path({suffix: '.jpg'})
   screenshot(job.post.link, imagePath)    
     .then ->
       return done("getImage: File not saved!") if !fs.existsSync(imagePath)
       console.log job.imagePath = imagePath
       done(null, job)
-    .fail(done, job)
+    .fail (err) ->
+      done(err, job)
 
 createAlbum = (job, done) ->
 

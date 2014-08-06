@@ -4,6 +4,7 @@ commentMessage = require("../commentMessage")
 
 
 module.exports = (job, done) ->
+  # requires: job.post (.link, .name, .description)
 
   pad = (number) ->
     if number < 10 and job.imagePaths > 9
@@ -37,11 +38,12 @@ module.exports = (job, done) ->
   time = ((Date.now() - job.startTime)/1000).toFixed(1)
   comment = commentMessage(time)
 
-  if job.imagePaths.length > 0
-    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} Preview: https://www.facebook.com/{result=name-1:$.id}"}
-    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\nFull Album (#{job.imagePaths.length} images): https://www.facebook.com/{result=create-album:$.id}"}
-  else
-    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} https://www.facebook.com/{result=name-1:$.id}"}      
+  if job.postId
+    if job.imagePaths.length > 0
+      batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} Preview: https://www.facebook.com/{result=name-1:$.id}"}
+      batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\nFull Album (#{job.imagePaths.length} images): https://www.facebook.com/{result=create-album:$.id}"}
+    else
+      batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} https://www.facebook.com/{result=name-1:$.id}"}      
 
   data.batch = JSON.stringify(batch)
 
