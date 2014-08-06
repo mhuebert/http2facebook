@@ -23,12 +23,18 @@ Fire.auth(process.env.firebase_secret)
 wait = (t, fn) ->
   setTimeout fn, t*1000
 
+# handleJob = (job, cb) ->
+#   pipeline job, [
+#     getImage
+#     imageToAlbumRaw
+#   ], finished
+# wait 0.2, -> handleJob {post: {link: "http://www.apple.com/"}}
+
 Fire.child("stream").on "child_added", (snap) ->
   stream = _.extend snap.val(),
     key: snap.name()
     ref: snap.ref()
   handleJob {stream: stream}
-
 
 handleJob = (job, cb) ->
   pipeline job, [
@@ -76,7 +82,6 @@ getPost = (job, done) ->
     query:
       access_token: process.env.page_token
   r.on "success", (data, response) ->
-    # console.log "getPost", result, response.statusCode, response.req?.path
     done null, _.extend(job, {post: data})
 
   r.on "fail", (data, response) -> done(data, job)
@@ -84,14 +89,15 @@ getPost = (job, done) ->
 
 getImage = (job, done) ->
   return done("getImage: no link") if !job.post.link
-  console.log imagePath = temp.path({suffix: '.jpg'})
-  screenshot(job.post.link, imagePath)    
-    .then ->
+  imagePath = temp.path({suffix: '.jpg'})
+  screenshot(job.post.link, imagePath, {width: 1000, maxHeight: 28000})    
+    .fail (err) ->
+      done(err, job)
+    .done ->
       return done("getImage: File not saved!") if !fs.existsSync(imagePath)
       console.log job.imagePath = imagePath
       done(null, job)
-    .fail (err) ->
-      done(err, job)
+    
 
 createAlbum = (job, done) ->
 

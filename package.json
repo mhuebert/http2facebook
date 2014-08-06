@@ -15,7 +15,7 @@
     "restler": "^3.2.2",
     "firebase": "^1.0.18",
     "gm": "^1.16.0",
-    "url-to-image": "^0.1.7",
+    "url-to-image": "mhuebert/url-to-image",
     "underscore": "^1.6.0",
     "image-size": "^0.3.2"
   }

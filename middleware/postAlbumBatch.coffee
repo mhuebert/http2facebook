@@ -47,6 +47,8 @@ module.exports = (job, done) ->
 
   data.batch = JSON.stringify(batch)
 
+  console.log data.batch
+
   r = rest.post "https://graph.facebook.com/v2.0/",
     multipart: true
     data: data
