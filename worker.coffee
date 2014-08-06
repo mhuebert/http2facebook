@@ -90,7 +90,7 @@ getPost = (job, done) ->
 getImage = (job, done) ->
   return done("getImage: no link") if !job.post.link
   imagePath = temp.path({suffix: '.jpg'})
-  screenshot(job.post.link, imagePath, {width: 1000, maxHeight: 28000})    
+  screenshot(job.post.link, imagePath, {width: 1280, maxHeight: 28000})    
     .fail (err) ->
       done(err, job)
     .done ->
