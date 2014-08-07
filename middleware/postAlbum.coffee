@@ -15,7 +15,7 @@ module.exports = (job, done) ->
     name: job.post.name || job.post.caption || job.post.link
     message: "Processed in #{time} seconds.\n\n #{job.post.description}"
   batch = [
-    {method: "POST", name: "create-album", relative_url: "/#{process.env.page_id}/albums", body: "name=#{album.name}&description=#{album.message}&no_story=1"}
+    {method: "POST", name: "create-album", relative_url: "/#{process.env.page_id}/albums", body: "name=#{album.name}&description=#{album.message}#{if job.stream.sender_id == '1445183662425215' then '' else '&no_story=1'}"}
     {method: "POST", name: "name-0", relative_url: "/{result=create-album:$.id}/photos", attached_files: "file_full", body: "message=#{job.post.link}#{if job.stream.sender_id == '1445183662425215' then '' else '&no_story=1'}"}
   ]
   
