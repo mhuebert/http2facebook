@@ -10,8 +10,8 @@ _ = require("underscore")
   fns[0] value, (err, response) ->
 
     if err == "stop"
-      return finished(null)
+      return finished(null, response)
     if err
-      return finished(err)
+      return finished(err, response)
 
     pipeline(response, fns.slice(1), finished)

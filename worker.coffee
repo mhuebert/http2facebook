@@ -28,7 +28,7 @@ Fire.auth(process.env.firebase_secret)
 #   ], finished
 # wait 0.2, -> handleJob {post: {link: "https://www.google.ca/webhp?ion=1&espv=2&ie=UTF-8#q=where%20can%20I%20find%20some%20food%20and%20water"}}
 
-Fire.child("stream").limit(1).endAt(0).on "child_added", (snap) ->
+Fire.child("stream").limit(5).endAt(0).on "child_added", (snap) ->
   stream = _.extend snap.val(),
     key: snap.name()
     ref: snap.ref()
@@ -48,15 +48,9 @@ handleJob = (job, cb) ->
     markJobComplete
   ], finished
 
-
-# updateJob = (data) ->
-#   (job, done) ->
-#     job.stream.ref.update data
-#     done(null, job)
-
 markJobStart = (job, done) ->
-  job.stream.ref.update {started: true}
-  done(null, job)
+  job.stream.ref.update {started: true}, ->
+    done(null, job)
 
 markJobComplete = (job, done) ->
   ref = job.stream.ref
