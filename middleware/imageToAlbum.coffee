@@ -1,6 +1,7 @@
 fs = require('fs')
-gm = require("gm").subClass({ imageMagick: true })
 path = require("path")
+sizeOf = require('image-size')
+exec = require("child_process").exec
 
 addSuffix = (path, suffix) ->
   path[0..-5] + "-" + suffix + path[-4..-1]
@@ -11,27 +12,29 @@ insert = (string, toInsert, index) ->
     toInsert + string
 
 module.exports = (job, done) ->
-  buffer = fs.readFileSync(job.imagePath) 
-  gm(buffer).size (err, size) ->
-    numImages = Math.ceil size.height / 800
+  t1 = Date.now()
 
+  sizeOf job.imagePath, (err, dimensions) ->
+    {width, height} = dimensions
+    job.imagePaths = []
+
+    maxPages = 40
+    pageHeight = 800
+
+    numImages = Math.min (Math.ceil height / pageHeight), maxPages
+    # canvasHeight = Math.min height, pageHeight*numImages
     if numImages == 1
-      job.imagePaths = []
       return done(null, job)
 
-    imagePaths = []
-    imageFinishedCount = 0
+    script = "
+    convert -crop x#{numImages}+20@ +repage +adjoin #{job.imagePath} #{job.imagePath[0..-5]}_%d.jpg;
+    "
 
-    count = ->
-      imageFinishedCount += 1
-      if imageFinishedCount == numImages
-        job.imagePaths = imagePaths
-        done(null, job)
-
-    for i in [0..(numImages-1)]
-      iPath = addSuffix(job.imagePath, i)
-      imagePaths.push iPath
-      do (i, iPath) ->
-        gm(buffer)
-          .crop(size.width, 810, 0, (790*i))
-          .write(iPath, -> count())
+    exec script, (err, stdout, stderr) ->
+      return done(err, job) if err
+      return done(stderr, job) if stderr
+      # console.log(stdout)
+      for i in [0..(numImages-1)]
+        job.imagePaths.push job.imagePath[0..-5]+"_#{i}.jpg"
+      console.log "Image paginated in #{Date.now() - t1}"
+      done(null, job)

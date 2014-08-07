@@ -12,10 +12,8 @@ commentMessage = require("./commentMessage")
 {pipeline, log} = require("./pipeline")
 ___ = log
 
-imageToAlbum = require("./middleware/imageToAlbum")
 postAlbum = require("./middleware/postAlbum")
-postAlbumBatch = require("./middleware/postAlbumBatch")
-imageToAlbumRaw = require("./middleware/imageToAlbumRaw")
+imageToAlbum = require("./middleware/imageToAlbum")
 
 Fire = new Firebase(process.env.fire_url)
 Fire.auth(process.env.firebase_secret)
@@ -23,31 +21,31 @@ Fire.auth(process.env.firebase_secret)
 wait = (t, fn) ->
   setTimeout fn, t*1000
 
-# handleJob = (job, cb) ->
-#   pipeline job, [
-#     getImage
-#     imageToAlbumRaw
-#   ], finished
-# wait 0.2, -> handleJob {post: {link: "http://en.wikipedia.org/wiki/Main_Page"}}
-
-Fire.child("stream").on "child_added", (snap) ->
-  stream = _.extend snap.val(),
-    key: snap.name()
-    ref: snap.ref()
-  handleJob {stream: stream}
-
 handleJob = (job, cb) ->
   pipeline job, [
-    validateJob
-    startTimer
-    updateJob(started: true)
-    getPost
     getImage
-    imageToAlbumRaw
-    postAlbumBatch
-    # # hidePost
-    updateJob(complete: true)
+    imageToAlbum
   ], finished
+wait 0.2, -> handleJob {post: {link: "https://www.google.ca/webhp?ion=1&espv=2&ie=UTF-8#q=where%20can%20I%20find%20some%20food%20and%20water"}}
+
+# Fire.child("stream").on "child_added", (snap) ->
+#   stream = _.extend snap.val(),
+#     key: snap.name()
+#     ref: snap.ref()
+#   handleJob {stream: stream}
+
+# handleJob = (job, cb) ->
+#   pipeline job, [
+#     validateJob
+#     startTimer
+#     updateJob(started: true)
+#     getPost
+#     getImage
+#     imageToAlbum
+#     postAlbum
+#     # # hidePost
+#     updateJob(complete: true)
+#   ], finished
 
 updateJob = (data) ->
   (job, done) ->
@@ -93,9 +91,9 @@ getImage = (job, done) ->
   screenshot(job.post.link, imagePath, {width: 1280, maxHeight: 28000})    
     .fail (err) ->
       done(err, job)
-    .done ->
+    .then ->
       return done("getImage: File not saved!") if !fs.existsSync(imagePath)
-      console.log job.imagePath = imagePath
+      job.imagePath = imagePath
       done(null, job)
     
 
