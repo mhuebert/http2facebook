@@ -60,7 +60,7 @@ module.exports = (job, done) ->
       batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} Preview: https://www.facebook.com/{result=name-1:$.id}"}
       batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\nFull Album (#{job.imagePaths.length} images): https://www.facebook.com/{result=create-album:$.id}"}
     else
-      batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} https://www.facebook.com/{result=name-1:$.id}"}      
+      batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} https://www.facebook.com/{result=name-0:$.id}"}      
 
   console.log data.batch = JSON_stringify(batch)
 
