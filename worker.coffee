@@ -28,29 +28,39 @@ Fire.auth(process.env.firebase_secret)
 #   ], finished
 # wait 0.2, -> handleJob {post: {link: "https://www.google.ca/webhp?ion=1&espv=2&ie=UTF-8#q=where%20can%20I%20find%20some%20food%20and%20water"}}
 
-Fire.child("stream").on "child_added", (snap) ->
+Fire.child("stream").limit(1).endAt(0).on "child_added", (snap) ->
   stream = _.extend snap.val(),
     key: snap.name()
     ref: snap.ref()
+    priority: snap.getPriority()
   handleJob {stream: stream}
 
 handleJob = (job, cb) ->
   pipeline job, [
     validateJob
     startTimer
-    updateJob(started: true)
+    markJobStart
     getPost
     getImage
     imageToAlbum
     postAlbum
     # # hidePost
-    updateJob(complete: true)
+    markJobComplete
   ], finished
+
 
 updateJob = (data) ->
   (job, done) ->
     job.stream.ref.update data
     done(null, job)
+
+markJobStart = (job, done) ->
+  job.stream.ref.update {started: true}
+
+markJobComplete = (job, done) ->
+  ref = job.stream.ref
+  ref.update {complete: true}
+  ref.setPriority 3
 
 startTimer = (job, done) ->
   job.startTime = Date.now()
@@ -59,6 +69,9 @@ startTimer = (job, done) ->
 finished = (err, job) ->
   if err
     console.log "Error:", err, job
+    ref = job.stream.ref
+    ref.child("errors").push JSON.stringify([err, job])
+    ref.setPriority 2
     return
   if job?
     console.log "Finished job in #{((Date.now()-job.startTime)/1000).toFixed(1)}s"
@@ -66,6 +79,7 @@ finished = (err, job) ->
 
 validateJob = (job, done) ->
   {stream} = job
+
   if true in [stream.started, stream.complete]
     return done("stop", "Stream already in progress")
   if !job.stream.post_id
