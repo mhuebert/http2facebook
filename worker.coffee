@@ -90,9 +90,10 @@ getImage = (job, done) ->
   imagePath = temp.path({suffix: '.jpg'})
   screenshot(job.post.link, imagePath, {width: 1280, maxHeight: 28000})    
     .fail (err) ->
+      console.log "getImage: Fail"
       done(err, job)
     .then ->
-      return done("getImage: File not saved!") if !fs.existsSync(imagePath)
+      return done("getImage: Done, File not saved!", arguments) if !fs.existsSync(imagePath)
       job.imagePath = imagePath
       done(null, job)
     
