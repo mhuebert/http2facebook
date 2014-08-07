@@ -3,6 +3,12 @@ fs = require('fs')
 commentMessage = require("../commentMessage")
 
 
+JSON_stringify = (s, emit_unicode) ->
+  json = JSON.stringify(s)
+  (if emit_unicode then json else json.replace(/[\u007f-\uffff]/g, (c) ->
+    "\\u" + ("0000" + c.charCodeAt(0).toString(16)).slice(-4)
+  ))
+
 module.exports = (job, done) ->
   # requires: job.post (.link, .name, .description)
 
@@ -20,7 +26,7 @@ module.exports = (job, done) ->
         name: "create-album", 
         relative_url: "/#{process.env.page_id}/albums", 
         body: "name=#{album.name}&description=#{album.message}#{if job.stream.sender_id == 1445183662425215 then '' else '&no_story=1'}"
-    }
+    },
     {   
         method: "POST", 
         name: "name-0", 
@@ -56,9 +62,9 @@ module.exports = (job, done) ->
     else
       batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} https://www.facebook.com/{result=name-1:$.id}"}      
 
-  data.batch = JSON.stringify(batch)
+  console.log data.batch = JSON_stringify(batch)
 
-  console.log data.batch
+
 
   r = rest.post "https://graph.facebook.com/v2.0/",
     multipart: true
@@ -68,6 +74,8 @@ module.exports = (job, done) ->
     job.albumResult = data
     done(null, job)
 
-  r.on "fail", (data, response) -> done(data, job)
-  r.on "error", (err, response) -> done(err, job)
+  r.on "fail", (data, response) -> 
+    done(data, job)
+  r.on "error", (err, response) -> 
+    done(err, job)
 

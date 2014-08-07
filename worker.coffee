@@ -49,10 +49,10 @@ handleJob = (job, cb) ->
   ], finished
 
 
-updateJob = (data) ->
-  (job, done) ->
-    job.stream.ref.update data
-    done(null, job)
+# updateJob = (data) ->
+#   (job, done) ->
+#     job.stream.ref.update data
+#     done(null, job)
 
 markJobStart = (job, done) ->
   job.stream.ref.update {started: true}
