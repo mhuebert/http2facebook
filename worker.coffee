@@ -18,34 +18,34 @@ imageToAlbum = require("./middleware/imageToAlbum")
 Fire = new Firebase(process.env.fire_url)
 Fire.auth(process.env.firebase_secret)
 
-wait = (t, fn) ->
-  setTimeout fn, t*1000
-
-handleJob = (job, cb) ->
-  pipeline job, [
-    getImage
-    imageToAlbum
-  ], finished
-wait 0.2, -> handleJob {post: {link: "https://www.google.ca/webhp?ion=1&espv=2&ie=UTF-8#q=where%20can%20I%20find%20some%20food%20and%20water"}}
-
-# Fire.child("stream").on "child_added", (snap) ->
-#   stream = _.extend snap.val(),
-#     key: snap.name()
-#     ref: snap.ref()
-#   handleJob {stream: stream}
+# wait = (t, fn) ->
+#   setTimeout fn, t*1000
 
 # handleJob = (job, cb) ->
 #   pipeline job, [
-#     validateJob
-#     startTimer
-#     updateJob(started: true)
-#     getPost
 #     getImage
 #     imageToAlbum
-#     postAlbum
-#     # # hidePost
-#     updateJob(complete: true)
 #   ], finished
+# wait 0.2, -> handleJob {post: {link: "https://www.google.ca/webhp?ion=1&espv=2&ie=UTF-8#q=where%20can%20I%20find%20some%20food%20and%20water"}}
+
+Fire.child("stream").on "child_added", (snap) ->
+  stream = _.extend snap.val(),
+    key: snap.name()
+    ref: snap.ref()
+  handleJob {stream: stream}
+
+handleJob = (job, cb) ->
+  pipeline job, [
+    validateJob
+    startTimer
+    updateJob(started: true)
+    getPost
+    getImage
+    imageToAlbum
+    postAlbum
+    # # hidePost
+    updateJob(complete: true)
+  ], finished
 
 updateJob = (data) ->
   (job, done) ->
