@@ -4,9 +4,6 @@ screenshot = require('url-to-image')
 path = require("path")
 moment = require("moment")
 
-setInterval ->
-  console.log "Tick, #{moment().format('MMMM Do YYYY, h:mm:ss a')}"
-, 60000
 
 temp = require('temp')
 rest = require("restler")
@@ -20,6 +17,19 @@ imageToAlbum = require("./middleware/imageToAlbum")
 
 Fire = new Firebase(process.env.fire_url)
 Fire.auth(process.env.firebase_secret)
+
+
+ping = ->
+  console.log "Tick, #{moment().format('MMMM Do YYYY, h:mm:ss a')}"
+  r = rest.post "https://internetmirror.herokuapp.com"
+
+  r.on "success", (data, response) -> 
+    console.log "Events server up"
+
+  r.on "fail", (data, response) -> console.log "Events server not responding"
+  r.on "error", (err, response) -> console.log "Events server not responding"
+setInterval ping, 180*1000
+ping()
 
 # wait = (t, fn) ->
 #   setTimeout fn, t*1000
