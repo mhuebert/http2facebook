@@ -49,6 +49,10 @@ handleJob = (job, cb) ->
     markJobComplete
   ], finished
 
+startTimer = (job, done) ->
+  job.startTime = job.stream.__time || Date.now()
+  done(null, job)
+
 markJobStart = (job, done) ->
   job.stream.ref.update {started: true}, ->
     done(null, job)
@@ -57,10 +61,6 @@ markJobComplete = (job, done) ->
   ref = job.stream.ref
   ref.update {complete: true}
   ref.setPriority 3
-  done(null, job)
-
-startTimer = (job, done) ->
-  job.startTime = Date.now()
   done(null, job)
 
 finished = (err, job) ->
