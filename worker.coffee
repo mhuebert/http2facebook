@@ -63,25 +63,31 @@ startTimer = (job, done) ->
   done(null, job)
 
 finished = (err, job) ->
-  if err
+  ref = job.stream.ref
+  if err == "skip"
+    console.log "Skipped because in progress", job
+    return
+  if err == "complete"
+    console.log "Marked job complete", job
+    ref.setPriority 3
+    return
+  if err?
     console.log "Error:", err, job
-    ref = job.stream.ref
     ref.child("errors").push JSON.stringify([err, job])
     ref.setPriority 2
     return
   if job?
     console.log "Finished job in #{((Date.now()-job.startTime)/1000).toFixed(1)}s"
-  # console.log "finalValue", value
 
 validateJob = (job, done) ->
   {stream} = job
 
   if true in [stream.started, stream.complete]
-    return done("stop", "Stream already in progress")
+    return done("skip", job)
   if !job.stream.post_id
-    return done("readStream: No post id in job", job)
+    return done("No post id in job", job)
   if job.stream.comment_id
-    return done("stop", "This is a comment")
+    return done("complete", job)
   done(null, job)
 
 getPost = (job, done) ->

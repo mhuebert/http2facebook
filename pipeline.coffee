@@ -9,8 +9,6 @@ _ = require("underscore")
   return finished(null, value) if not fns.length
   fns[0] value, (err, response) ->
 
-    if err == "stop"
-      return finished(null, response)
     if err
       return finished(err, response)
 
