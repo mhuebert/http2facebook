@@ -3,6 +3,8 @@ moment = require("moment")
 ref = new Firebase(process.env.fire_url)
 ref.auth(process.env.firebase_secret)
 
+ref.child("heartbeat").on "value", ->
+
 heartbeat = ->
   time = moment(time).format('MMMM Do YYYY, h:mm:ss a')
   ref.child("heartbeat/image-grabber").set time, (err) ->
