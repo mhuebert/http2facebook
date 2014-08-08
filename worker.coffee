@@ -3,8 +3,6 @@ _ = require("underscore")
 screenshot = require('url-to-image')
 path = require("path")
 
-require("./ping")
-
 temp = require('temp')
 rest = require("restler")
 Firebase = require("firebase")
@@ -17,6 +15,8 @@ imageToAlbum = require("./middleware/imageToAlbum")
 
 Fire = new Firebase(process.env.fire_url)
 Fire.auth(process.env.firebase_secret)
+
+require("./heartbeat")
 
 # wait = (t, fn) ->
 #   setTimeout fn, t*1000
