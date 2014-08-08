@@ -5,7 +5,7 @@ ref.auth(process.env.firebase_secret)
 
 heartbeat = ->
   time = moment(time).format('MMMM Do YYYY, h:mm:ss a')
-  ref.child("heartbeat/image-grabber").set time, ->
-    console.log "Tick, #{time}"
+  ref.child("heartbeat/image-grabber").set time, (err) ->
+    console.log "Tick, #{time}", err
     
 setInterval heartbeat, 30*1000
