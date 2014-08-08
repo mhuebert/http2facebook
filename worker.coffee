@@ -50,7 +50,7 @@ handleJob = (job, cb) ->
   ], finished
 
 startTimer = (job, done) ->
-  job.startTime = job.stream.__time || Date.now()
+  job.startTime = (job.stream.__time*1000) || Date.now()
   done(null, job)
 
 markJobStart = (job, done) ->
