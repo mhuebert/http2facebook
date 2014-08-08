@@ -17,6 +17,7 @@
     "gm": "^1.16.0",
     "url-to-image": "mhuebert/url-to-image",
     "underscore": "^1.6.0",
-    "image-size": "^0.3.2"
+    "image-size": "^0.3.2",
+    "moment": "^2.8.1"
   }
 }

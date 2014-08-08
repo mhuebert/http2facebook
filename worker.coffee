@@ -2,8 +2,11 @@ fs = require('fs')
 _ = require("underscore")
 screenshot = require('url-to-image')
 path = require("path")
+moment = require("moment")
 
-
+setInterval ->
+  console.log "Tick, #{moment().format('MMMM Do YYYY, h:mm:ss a')}"
+, 60000
 
 temp = require('temp')
 rest = require("restler")
