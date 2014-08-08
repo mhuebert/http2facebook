@@ -75,7 +75,8 @@ finished = (err, job) ->
   if err?
     console.log "Error:", err, job
     if job?.stream
-      job = _(job).omit("ref")
+      job = _(job).omit("stream")
+
     ref.child("errors").push [err, job]
     ref.setPriority 2
     return
