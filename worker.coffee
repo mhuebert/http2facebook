@@ -41,11 +41,12 @@ ping()
 #   ], finished
 # wait 0.2, -> handleJob {post: {link: "https://www.google.ca/webhp?ion=1&espv=2&ie=UTF-8#q=where%20can%20I%20find%20some%20food%20and%20water"}}
 
-Fire.child("stream").limit(5).endAt(0).on "child_added", (snap) ->
+Fire.child("stream").endAt(0).on "child_added", (snap) ->
   stream = _.extend snap.val(),
     key: snap.name()
     ref: snap.ref()
     priority: snap.getPriority()
+  # console.log _(stream).omit("ref")
   handleJob {stream: stream}
 
 handleJob = (job, cb) ->
@@ -86,7 +87,9 @@ finished = (err, job) ->
     return
   if err?
     console.log "Error:", err, job
-    ref.child("errors").push JSON.stringify([err, job])
+    if job?.stream
+      job = _(job).omit("ref")
+    ref.child("errors").push [err, job]
     ref.setPriority 2
     return
   if job?
@@ -109,6 +112,8 @@ getPost = (job, done) ->
     query:
       access_token: process.env.page_token
   r.on "success", (data, response) ->
+    if !data.link
+      return done("No Link!", job)
     done null, _.extend(job, {post: data})
 
   r.on "fail", (data, response) -> done(data, job)
