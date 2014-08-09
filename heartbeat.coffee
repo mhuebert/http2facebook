@@ -11,6 +11,7 @@ time = -> moment().format('MMMM Do YYYY, h:mm:ss a')
 Cron = require("cron").CronJob
 
 new Cron '* * * * * *', ->
+  console.log "in cron"
   ref.child("heartbeat/#{process.env.other_app}").set time()
 , null, true
 
