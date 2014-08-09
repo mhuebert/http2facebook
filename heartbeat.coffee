@@ -1,10 +1,12 @@
 Firebase = require("firebase")
 moment = require("moment")
 rest = require("restler")
+
+# Heroku = require('heroku-client')
+# heroku = new Heroku({ token: process.env.heroku_api })
+
 ref = new Firebase(process.env.fire_url)
 ref.auth(process.env.firebase_secret)
-
-ref.child("heartbeat").on "value", ->
 
 heartbeat = ->
   time = moment(time).format('MMMM Do YYYY, h:mm:ss a')
@@ -13,12 +15,28 @@ heartbeat = ->
 
   r = rest.post process.env.event_server_url
   
-  r.on "success", (result, response) ->
+  r.on "success", (result, response) -> 
+    failedAttempts = 0
 
-  r.on "fail", (data, response) -> 
-    console.log "Event server down"
-  r.on "error", (err, response) -> 
-    console.log "Event server down"
+  r.on "fail", handleFail
+  r.on "error", handleFail
 
-setInterval heartbeat, 30*1000
+# failedAttempts = 0
+handleFail = ->
+  console.log "Event server down"
+#   failedAttempts += 1
+#   # if failedAttempts == 3
+#     # heroku.delete()
+
+# heroku.apps().list().then (apps) -> console.log apps; console.log 1;
+# console.log 'here'
+# heroku.request
+#   method: 'DELETE',
+#   path: "/apps/#{process.env.other_app}/dynos"
+# , (err, response) ->
+#   console.log arguments
+
+# heroku.delete("apps/#{process.env.other_app}/dynos")
+
+setInterval heartbeat, 20*1000
 heartbeat()
