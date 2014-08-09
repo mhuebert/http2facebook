@@ -4,8 +4,6 @@ rest = require("restler")
 ref = new Firebase(process.env.fire_url)
 ref.auth(process.env.firebase_secret)
 
-ref.child("heartbeat").on "value", -> 
-
 time = -> moment().format('MMMM Do YYYY, h:mm:ss a')
 
 Cron = require("cron").CronJob
