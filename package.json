@@ -20,6 +20,7 @@
     "image-size": "^0.3.2",
     "moment": "^2.8.1",
     "express": "^4.8.2",
-    "heroku-client": "^1.5.0"
+    "heroku-client": "^1.5.0",
+    "cron": "^1.0.4"
   }
 }
