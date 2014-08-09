@@ -11,9 +11,14 @@ time = -> moment().format('MMMM Do YYYY, h:mm:ss a')
 Cron = require("cron").CronJob
 
 new Cron '* * * * * *', ->
-  console.log "in cron"
+  console.log "in cron", time()
   ref.child("heartbeat/#{process.env.other_app}").set time()
 , null, true
+
+setInterval ->
+  console.log "in timeout", time()
+, 1000
+
 
 # new Cron '40 * * * * *', ->
 #   r = rest.get "https://#{process.env.other_app}.herokuapp.com"
