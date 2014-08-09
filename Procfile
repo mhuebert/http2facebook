@@ -1,1 +1,1 @@
-web: coffee worker.coffee
+worker: coffee worker.coffee
