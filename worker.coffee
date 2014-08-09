@@ -1,3 +1,8 @@
+if process.env.NODETIME_ACCOUNT_KEY
+  require("nodetime").profile
+    accountKey: process.env.NODETIME_ACCOUNT_KEY
+
+
 fs = require('fs')
 _ = require("underscore")
 screenshot = require('url-to-image')
