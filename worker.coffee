@@ -176,3 +176,8 @@ postComment = (job, done) ->
 
   r.on "fail", (data, response) -> done(data, job)
   r.on "error", (err, response) -> done(err, job)
+
+app = require("express")()
+app.get "/", (req, res) ->
+  res.status(200).send "Alive"
+app.listen(process.env.PORT)
