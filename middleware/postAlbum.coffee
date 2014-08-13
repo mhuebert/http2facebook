@@ -25,14 +25,14 @@ module.exports = (job, done) ->
         method: "POST", 
         name: "create-album", 
         relative_url: "/#{process.env.page_id}/albums", 
-        body: "name=#{album.name}&description=#{album.message}#{if job.stream.sender_id == 1445183662425215 then '' else '&no_story=1'}"
+        body: "name=#{album.name}&description=#{album.message}#{if job.stream?.sender_id == 1445183662425215 then '' else '&no_story=1'}"
     },
     {   
         method: "POST", 
         name: "name-0", 
         relative_url: "/{result=create-album:$.id}/photos", 
         attached_files: "file_full", 
-        body: "message=#{job.post.link}#{if job.stream.sender_id == 1445183662425215 then '' else '&no_story=1'}"
+        body: "message=#{job.post.link}#{if job.stream?.sender_id == 1445183662425215 then '' else '&no_story=1'}"
     }
   ]
   
