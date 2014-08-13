@@ -17,6 +17,7 @@ ___ = log
 
 postAlbum = require("./middleware/postAlbum")
 imageToAlbum = require("./middleware/imageToAlbum")
+parseText = require("./middleware/parseText")
 
 Fire = new Firebase(process.env.fire_url)
 Fire.auth(process.env.firebase_secret)
@@ -26,13 +27,19 @@ require("./heartbeat")
 wait = (t, fn) ->
   setTimeout fn, t*1000
 
+# testJob = 
+#   post:
+#     link: "https://twitter.com/jpginternet/status/499548497482629121"
+#   postId: 1449635838646664
+
 # handleJob = (job, cb) ->
 #   pipeline job, [
-#     getImage
-#     imageToAlbum
-#     postAlbum
+#     getPageContents
+#     # imageToAlbum
+#     # postAlbum
+#     parseText
 #   ], finished
-# wait 0.2, -> handleJob {post: {link: "https://web.archive.org/web/19990218140915/http://www1.nytimes.com/"}}
+# wait 0.2, -> handleJob testJob
 
 Fire.child("stream").endAt(0).on "child_added", (snap) ->
   stream = _.extend snap.val(),
@@ -51,6 +58,7 @@ handleJob = (job, cb) ->
     getPageContents
     imageToAlbum
     postAlbum
+    parseText
     # # hidePost
     markJobComplete
   ], finished
