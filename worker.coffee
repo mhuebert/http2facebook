@@ -48,7 +48,7 @@ handleJob = (job, cb) ->
     startTimer
     markJobStart
     getPost
-    getImage
+    getPageContents
     imageToAlbum
     postAlbum
     # # hidePost
@@ -113,7 +113,7 @@ getPost = (job, done) ->
   r.on "fail", (data, response) -> done(data, job)
   r.on "error", (err, response) -> done(err, job)
 
-getImage = (job, done) ->
+getPageContents = (job, done) ->
   return done("getImage: no link") if !job.post.link
   imagePath = temp.path({suffix: '.jpg'})
   screenshot(job.post.link, imagePath, {width: 1280, maxHeight: 28000})    
