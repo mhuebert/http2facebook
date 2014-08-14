@@ -17,7 +17,7 @@ ___ = log
 
 postAlbum = require("./middleware/postAlbum")
 imageToAlbum = require("./middleware/imageToAlbum")
-parseText = require("./middleware/parseText")
+postText = require("./middleware/postText")
 
 Fire = new Firebase(process.env.fire_url)
 Fire.auth(process.env.firebase_secret)
@@ -41,13 +41,24 @@ wait = (t, fn) ->
 #   ], finished
 # wait 0.2, -> handleJob testJob
 
-Fire.child("stream").endAt(0).on "child_added", (snap) ->
+doStream = (key) ->
+  Fire.child(key).once "value", handleSnapshot
+
+handleSnapshot = (snap) ->
+  if snap.val() == null
+    return
   stream = _.extend snap.val(),
     key: snap.name()
     ref: snap.ref()
     priority: snap.getPriority()
-  # console.log _(stream).omit("ref")
   handleJob {stream: stream}
+
+# streams = []
+# for stream in streams
+#   doStream(stream)
+# doStream("stream/")
+
+Fire.child("stream").on "child_added", handleSnapshot
 
 handleJob = (job, cb) ->
   pipeline job, [
@@ -58,9 +69,8 @@ handleJob = (job, cb) ->
     getPageContents
     imageToAlbum
     postAlbum
-    parseText
-    # # hidePost
-    markJobComplete
+    postText
+    moveJobToPath("complete")
   ], finished
 
 startTimer = (job, done) ->
@@ -71,11 +81,20 @@ markJobStart = (job, done) ->
   job.stream.ref.update {started: true}, ->
     done(null, job)
 
-markJobComplete = (job, done) ->
-  ref = job.stream.ref
-  ref.update {complete: true}
-  ref.setPriority 3
-  done(null, job)
+moveJobToPath = (path) ->
+  (job, done) ->
+    {ref, key} = job.stream
+    done("Ref and key not set!", job) if !ref or !key
+    stream = _(job.stream).omit('ref', 'key', 'priority')
+    console.log "moving to #{path}/#{key}"
+    Fire.child("#{path}/#{key}").set stream, (err) ->
+      if err?
+        console.log "ERROR moving #{key}"
+        return
+      console.log "Moved successfully"
+      ref.set null, (err) ->
+        console.log "Removed original"
+
 
 finished = (err, job) ->
   ref = job.stream?.ref
@@ -83,29 +102,34 @@ finished = (err, job) ->
     console.log "Skipped because in progress", job
     return
   if err == "complete"
-    console.log "Marked job complete", job
-    ref?.setPriority 3
+    console.log "Mark job complete", job
+    return moveJobToPath("complete")(job, ->)
     return
-  if err?
+  if err? and ref?
+    job.stream = _(job.stream).omit("ref")
     console.log "Error:", err, job
-    if job?.stream
-      job.stream = _(job.stream).omit("ref")
-    if ref?
-      ref.child("errors").push [err, job]
-      ref.setPriority 2
-    return
+    ref.child("errors").push [err, job], ->
+      return moveJobToPath("error")(job, done)
   if job?
     console.log "Finished job in #{((Date.now()-job.startTime)/1000).toFixed(1)}s"
 
 validateJob = (job, done) ->
   {stream} = job
 
-  if true in [stream.started, stream.complete]
+  if stream.complete == true
+    return moveJobToPath("complete")(job, done)
+  
+  if 'errors' in _(stream).keys()
+    return moveJobToPath("error")(job, done)
+
+  if stream.started == true 
     return done("skip", job)
+
   if !job.stream.post_id
     return done("No post id in job", job)
+
   if job.stream.comment_id
-    return done("complete", job)
+    return moveJobToPath("is-comment")(job, done)
   done(null, job)
 
 getPost = (job, done) ->
@@ -115,27 +139,25 @@ getPost = (job, done) ->
       access_token: process.env.page_token
   r.on "success", (data, response) ->
     if !data.link
-      return done("No Link!", job)
+      return moveJobToPath("noLink")(job, done)
     done null, _.extend(job, {post: data})
 
   r.on "fail", (data, response) -> done(data, job)
   r.on "error", (err, response) -> done(err, job)
 
 getPageContents = (job, done) ->
-  return done("getImage: no link") if !job.post.link
+  return moveJobToPath("no-link")(job, done) if !job.post.link
   imagePath = temp.path({suffix: '.jpg'})
   screenshot(job.post.link, imagePath, {width: 1280, maxHeight: 28000})    
     .fail (err) ->
       console.log "getImage: Fail"
       done(err, job)
     .then ->
-      return done("getImage: Done, File not saved!", arguments) if !fs.existsSync(imagePath)
+      return done("getImage: Done, File not saved!", job) if !fs.existsSync(imagePath)
       job.imagePath = imagePath
       done(null, job)
     
-
 createAlbum = (job, done) ->
-
   r = rest.post "https://graph.facebook.com/v2.0/#{process.env.page_id}/albums", 
     data:
       access_token: process.env.page_token
