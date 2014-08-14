@@ -56,13 +56,13 @@ handleSnapshot = (snap) ->
 # streams = []
 # for stream in streams
 #   doStream(stream)
-# doStream("stream/1408038985af4695a69916ab17c00ebca1e5e2375a")
+doStream("stream/140805117883ea99f5f83b12351518b2bc0ac27719")
 
-Fire.child("stream").on "child_added", handleSnapshot
+# Fire.child("stream").on "child_added", handleSnapshot
 
 handleJob = (job, cb) ->
   pipeline job, [
-    validateJob
+    # validateJob
     startTimer
     markJobStart
     getPost
@@ -108,9 +108,15 @@ finished = (err, job) ->
     return
   if err? and ref?
     job.stream = _(job.stream).omit("ref")
+    loggedJob = {}
+    for key, val of job
+      loggedJob[key] = val
+      if key == "stream"
+        loggedJob[key] = _(val).omit("ref")
+
     console.log "Error:", err, job
-    ref.child("errors").push [err, job], ->
-      return moveJobToPath("error")(job, done)
+    ref.child("errors").push [err, loggedJob], ->
+      return moveJobToPath("error")(job, ->)
   if job?
     console.log "Finished job in #{((Date.now()-job.startTime)/1000).toFixed(1)}s"
 

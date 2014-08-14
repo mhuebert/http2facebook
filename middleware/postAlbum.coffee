@@ -21,7 +21,11 @@ module.exports = (job, done) ->
     name: job.post.name || job.post.caption || job.post.link
     message: "Processed in #{time} seconds.\n\n #{job.post.description}"
 
-  linkLegend = "Link Legend:\n\n"+fs.readFileSync(job.imagePath+"_links.txt").toString()
+  linkLegendPath = job.imagePath+"_links.txt"
+  if fs.existsSync(linkLegendPath)
+    linkLegend = "Link Legend:\n\n"+fs.readFileSync(linkLegendPath).toString()
+  else
+    linkLegend = ""
   
   batch = [
     {
