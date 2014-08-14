@@ -56,11 +56,15 @@ module.exports = (job, done) ->
   comment = commentMessage(time)
 
   if job.postId
+    # if job.imagePaths.length > 0
+    #   batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment}\n https://www.facebook.com/{result=name-0:$.id}"}
+    #   batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\nPhoto Album: (#{job.imagePaths.length} images): https://www.facebook.com/{result=create-album:$.id}"}
+    # else
     if job.imagePaths.length > 0
-      batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} Preview: https://www.facebook.com/{result=name-1:$.id}"}
-      batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\nFull Album (#{job.imagePaths.length} images): https://www.facebook.com/{result=create-album:$.id}"}
+      prefix = "JPG Album (#{job.imagePaths.length+1} images):"
     else
-      batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment} https://www.facebook.com/{result=name-0:$.id}"}      
+      prefix = "JPG:"
+    batch.push {method: "POST", relative_url:"/#{job.postId}/comments", body: "message=\n\n#{comment}\n\n#{prefix} https://www.facebook.com/{result=name-0:$.id}"}      
 
   console.log data.batch = JSON_stringify(batch)
 
