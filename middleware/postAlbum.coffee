@@ -20,6 +20,9 @@ module.exports = (job, done) ->
   album =
     name: job.post.name || job.post.caption || job.post.link
     message: "Processed in #{time} seconds.\n\n #{job.post.description}"
+
+  linkLegend = "Link Legend:\n\n"+fs.readFileSync(job.imagePath+"_links.txt").toString()
+  
   batch = [
     {
         method: "POST", 
@@ -32,7 +35,7 @@ module.exports = (job, done) ->
         name: "name-0", 
         relative_url: "/{result=create-album:$.id}/photos", 
         attached_files: "file_full", 
-        body: "message=#{job.post.link}#{if job.stream?.sender_id == 1445183662425215 then '' else '&no_story=1'}"
+        body: "message=#{job.post.link}\n\n#{linkLegend}#{if job.stream?.sender_id == 1445183662425215 then '' else '&no_story=1'}"
     }
   ]
   
@@ -48,7 +51,7 @@ module.exports = (job, done) ->
       name: "name-#{i}", 
       relative_url: "/{result=create-album:$.id}/photos", 
       attached_files: "file#{i}", 
-      body: "message=#{pad(i)} of #{job.imagePaths.length}.\n\n#{job.post.link} {result=name-#{i-1}:$.message}&no_story=1"}
+      body: "message=#{pad(i)} of #{job.imagePaths.length}.\n\n#{job.post.link}\n\n #{linkLegend} {result=name-#{i-1}:$.message}&no_story=1"}
     data["file"+i] = rest.data(imagePath, "image/jpeg", fs.readFileSync(imagePath))
   
 

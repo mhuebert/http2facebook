@@ -56,17 +56,18 @@ handleSnapshot = (snap) ->
 # streams = []
 # for stream in streams
 #   doStream(stream)
-# doStream("stream/")
+doStream("stream/1408038985af4695a69916ab17c00ebca1e5e2375a")
 
-Fire.child("stream").on "child_added", handleSnapshot
+# Fire.child("stream").on "child_added", handleSnapshot
 
 handleJob = (job, cb) ->
   pipeline job, [
-    validateJob
+    # validateJob
     startTimer
     markJobStart
     getPost
     getPageContents
+    # (job, done) -> console.log 
     imageToAlbum
     postAlbum
     postText
