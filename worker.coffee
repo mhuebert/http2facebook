@@ -56,13 +56,13 @@ handleSnapshot = (snap) ->
 # streams = []
 # for stream in streams
 #   doStream(stream)
-doStream("stream/140805117883ea99f5f83b12351518b2bc0ac27719")
+# doStream("stream/140805117883ea99f5f83b12351518b2bc0ac27719")
 
-# Fire.child("stream").on "child_added", handleSnapshot
+Fire.child("stream").on "child_added", handleSnapshot
 
 handleJob = (job, cb) ->
   pipeline job, [
-    # validateJob
+    validateJob
     startTimer
     markJobStart
     getPost
